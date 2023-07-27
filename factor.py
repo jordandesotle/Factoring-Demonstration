@@ -12,7 +12,6 @@
 # SECTION 2: FACTORING METHODS
 #	- Brute Force
 #	- Pollards Rho Algorithm
-#	- Elliptic Curve Factorization
 #
 #	- Difference of squares
 #	- Pollards p -1
@@ -31,8 +30,6 @@ import math
 import random
 import sympy
 
-
-
 # ============================== Helper Functions =============================
 
 # Generates a list of random numbers to test
@@ -42,8 +39,24 @@ def generate_random_numbers(lower_limit, upper_limit, num_integers):
 
 	return random_list
 
-# Checks a list of numbers and determines if each number is prime or not
-def check_if_numslist_prime(method, num_list):
+# Returns the method of factoring
+def get_factor_method(method):
+    if method == 1:
+        method_name = "Brute Force Factorization"
+        test_function = factorize_brute_force
+    elif method == 2:
+        method_name = "Pollards Rho Algorithm"
+        test_function = pollards_rho_factorize
+    else:
+        print("Invalid method selected.")
+        return
+    
+    print(method_name + ":")
+    
+    return test_function
+
+# Returns the method of checking whether a number is prime or not
+def get_prime_check_method(method):
     if method == 1:
         test_name = "Miller-Rabin Primality Test"
         test_function = miller_rabin_test
@@ -58,48 +71,39 @@ def check_if_numslist_prime(method, num_list):
         return
 
     print(test_name + ":")
+
+    return test_function
+
+# Checks a list of numbers and determines if each number is prime or not
+def check_if_numslist_prime(method, num_list):
     
-    prime_results = [(num, test_function(num)) for num in num_list]
+    test_func = get_prime_check_method(method)
+    
+    prime_results = [(num, test_func(num)) for num in num_list]
     for num, is_prime in prime_results:
         print(f"{num} is prime: {is_prime}")
 
-
 # Checks one number and determines if it is prime or not
 def check_if_num_prime(method, num):
-    if method == 1:
-        test_name = "Miller-Rabin Primality Test"
-        test_function = miller_rabin_test
-    elif method == 2:
-        test_name = "Baillie-PSW Test"
-        test_function = is_prime_baillie_psw
-    elif method == 3:
-        test_name = "AKS Primality Test"
-        test_function = is_prime_aks
-    else:
-        print("Invalid method selected.")
-        return
-
-    print(test_name + ":")
     
-    print(f"{num} is prime: {test_function(num)}")
+    test_func = get_prime_check_method(method)
+    
+    print(f"{num} is prime: {test_func(num)}")
 
+# Factors a list of numbers
+def factor_nums(method, num_list):
+
+    test_func = get_factor_method(method)
+
+    factor_results = [(num, test_func(num)) for num in num_list]
+    for num, result in factor_results:
+        print(f"Factors of {num}: {result}")
+
+# Factors a number
 def factor_num(method, num):
-	if method == 1:
-		method_name = "Brute Force Factorization"
-		test_function = factorize_brute_force
-	elif method == 2:
-		method_name = "Pollards Rho Algorithm"
-		test_function = pollards_rho_factorize
-	elif method == 3:
-		method_name = "Elliptic Curve Factorization"
-		test_function = ecm_factorize
-	else:
-	    print("Invalid method selected.")
-	    return
 
-	print(method_name + ":")
-
-	print(f"{num} is prime: {test_function(num)}")
+    test_func = get_factor_method(method)
+    print(f"Factors of {num}: {test_func(num)}\n")
 
 
 # =============================================================================
@@ -233,65 +237,35 @@ def pollards_rho_factorize(n):
 # print(f"Factors of {number}: {pollards_rho_factorize(number)}")
 
 # =============================================================================
-# SECTION 2C: Elliptic Curve Factoring
-# =============================================================================
-
-def ecm_factorize(n, max_steps=10000):
-    def gcd(a, b):
-        while b != 0:
-            a, b = b, a % b
-        return a
-
-    def elliptic_curve_point_addition(p, a, b, x1, y1, x2, y2):
-        if x1 == x2 and y1 == y2:
-            m = (3 * x1**2 + a) * pow(2 * y1, -1, p)
-        else:
-            m = (y2 - y1) * pow(x2 - x1, -1, p)
-        x3 = (m**2 - x1 - x2) % p
-        y3 = (m * (x1 - x3) - y1) % p
-        return x3, y3
-
-    def elliptic_curve_scalar_multiplication(p, a, b, x, y, scalar):
-        result_x, result_y = x, y
-        scalar -= 1
-        while scalar:
-            if scalar & 1:
-                result_x, result_y = elliptic_curve_point_addition(p, a, b, result_x, result_y, x, y)
-            x, y = elliptic_curve_point_addition(p, a, b, x, y, x, y)
-            scalar >>= 1
-        return result_x, result_y
-
-    # ECM parameters
-    a, b = 0, 7
-
-    # Random starting point
-    x, y = random.randint(1, n - 1), random.randint(1, n - 1)
-
-    for _ in range(max_steps):
-        x, y = elliptic_curve_scalar_multiplication(n, a, b, x, y, random.randint(1, n - 1))
-        factor = gcd(abs(x - x), n)
-        if factor > 1 and factor < n:
-            return [factor, n // factor]
-
-    return [n]
-
-# Example usage:
-# number = 1234567891011
-# print(f"Factors of {number}: {ecm_factorize(number)}")
-
-
-# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
 # Select the method
-#	1: Miller-Rabin
-#	2: Baillie-PSW
-#	3: AKS)
+#   Checking Primality      Factoring
+#	1: Miller-Rabin         1: Brute Force
+#	2: Baillie-PSW          2: Pollards
+#	3: AKS
+
+
 method = 1
-num = 53
+num = 1065240411651033974542969
+
+# increasingly large prime numbers
+test_arr_1 = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157]
+test_arr_2 = [3, 5, 11, 17, 31, 41, 59, 67, 83, 109, 127, 157, 179, 191, 211, 241, 277, 283, 331, 353, 367, 401, 431, 461, 509, 547, 563, 587, 599, 617, 709, 739, 773, 797]
+test_arr_3 = [5, 11, 31, 59, 127, 179, 277, 331, 431, 599, 709, 919, 1063, 1153, 1297, 1523, 1787, 1847, 2221, 2381, 2477, 2749, 3001, 3259, 3637, 3943, 4091, 4273, 4397]
+test_arr_4 = [11, 31, 127, 277, 709, 1063, 1787, 2221, 3001, 4397, 5381, 7193, 8527, 9319, 10631, 12763, 15299, 15823, 19577, 21179, 22093, 24859, 27457, 30133, 33967]
+test_arr_5 = [31, 127, 709, 1787, 5381, 8527, 15299, 19577, 27457, 42043, 52711, 72727, 87803, 96797, 112129, 137077, 167449, 173867, 219613, 239489, 250751, 285191]
+test_arr_6 = [127, 709, 5381, 15299, 52711, 87803, 167449, 219613, 318211, 506683, 648391, 919913, 1128889, 1254739, 1471343, 1828669, 2269733, 2364361, 3042161]
+test_arr_7 = [709, 5381, 52711, 167449, 648391, 1128889, 2269733, 3042161, 4535189, 7474967, 9737333, 14161729, 17624813, 19734581, 23391799, 29499439, 37139213]
+test_arr_8 = [5381, 52711, 648391, 2269733, 9737333, 17624813, 37139213, 50728129, 77557187, 131807699, 174440041, 259336153, 326851121, 368345293, 440817757]
+test_arr_9 = [52711, 648391, 9737333, 37139213, 174440041, 326851121, 718064159, 997525853, 1559861749, 2724711961, 3657500101, 5545806481, 7069067389]
+test_arr_10 = [648391, 9737333, 174440041, 718064159, 3657500101, 7069067389, 16123689073, 22742734291, 36294260117, 64988430769, 88362852307, 136395369829]
+test_arr_11 = [9737333, 174440041, 3657500101, 16123689073, 88362852307, 175650481151, 414507281407, 592821132889, 963726515729, 1765037224331, 2428095424619]
+test_arr_12 = [174440041, 3657500101, 88362852307, 414507281407, 2428095424619, 4952019383323, 12055296811267, 17461204521323, 28871271685163, 53982894593057]
+
 # test each algorithm for determining prime number
-check_if_num_prime(method, num)
+# check_if_num_prime(method, num)
 
 # read from file of large prime numbers to test
 
@@ -301,15 +275,27 @@ check_if_num_prime(method, num)
 random_list = generate_random_numbers(2,1000, 100)
 
 # need to determine if each number is prime or not using a test method
-factor_num(method, num)
+# factor_num(method, num)
+
+# factor_nums(method, random_list)
+factor_num(method, 10403)
 
 
 #random_list = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 7919]
 
 # check_if_nums_prime(method, random_list)
 
-
-
+print(88362852307 * 12055296811267)
 
 
 # debug / print statements in factoring functions
+
+
+# check_if_numslist_prime(1, random_list)
+# factor_nums(1, random_list)
+
+
+check_if_num_prime(1, num)
+
+
+factor_num(2, num)
